@@ -9,3 +9,5 @@ Takes the data from the PDFs in [US DOS' _Monthly Immigrant Visa Issuance Statis
 * Recomment code in `downloadPDFs()`
 * Inside `_output/` there will be a `full.json` with line-by-line reading of the data from the PDFs, and `aggregates.json` which clumps visa categories together and generates counts for each embassy
 
+## Copies of PDFs
+They're freely available on the Department of State's website but I'm not comfortable hosting copies and I'm not sure under which licence or laws the PDFs are released.
