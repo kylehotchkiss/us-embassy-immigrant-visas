@@ -114,7 +114,7 @@ async function parsePDFs( pdfs ) {
             const visa = line.substring(visaCodeIndex, (visaCodeIndex + 3));
             const count = line.substring((visaCodeIndex + 3), line.length);
 
-            _.set(statistics, `${pdf.slug}.${city}.${visa}`, Number(count));
+            _.set(statistics, `${city}.${pdf.slug}.${visa}`, Number(count));
           }
         }
     } catch ( error ) {
@@ -125,19 +125,44 @@ async function parsePDFs( pdfs ) {
   return statistics;
 }
 
-async function generateAggregates( statistics ) {
-  
+function generateAggregates( statistics ) {
+  const aggregates = {};
+
+  for ( const city in statistics ) {
+    for ( const date in statistics[city] ) {
+      let total = 0;
+      const categories = {};
+
+      for ( const visa in statistics[city][date] ) {
+        const visa_code = visa.substring(0, 2);
+        const visa_code_parsed = visa_code === 'CR' ? 'IR' : visa_code;
+
+        if ( !categories[visa_code_parsed] ) {
+          categories[visa_code_parsed] = 0;
+        }
+        
+        total += statistics[city][date][visa];
+        categories[visa_code_parsed] += statistics[city][date][visa];
+      }
+
+      _.set(aggregates, `${city}.${date}`, { categories , total } );
+    }
+  }
+
+  return aggregates
 }
 
 async function writeResults( statistics, aggregates ) {
   await fs.ensureDir('./_output');
-  fs.writeFileSync('./_output/full.json', JSON.stringify( statistics, null, 4 ) );
+  fs.writeFileSync('./_output/statistics.json', JSON.stringify( statistics, null, 4 ) );
+  fs.writeFileSync('./_output/aggregates.json', JSON.stringify( aggregates, null, 4 ) );
 }
 
 (async function main() {
   const pdfs = await getStatisticPDFs();
   await downloadPDFs(pdfs);
   const statistics = await parsePDFs(pdfs);
-  const aggregates = await generateAggregates( statistics );
-  await writeResults( statistics );
+  const aggregates = generateAggregates( statistics );
+
+  await writeResults( statistics, aggregates );
 })();
